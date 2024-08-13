@@ -24,7 +24,7 @@ for epoch in range(num_epochs):
     done = False
     while not done:
         action, log_prob = agent.get_action(Tensor(state[0]))
-        next_state, reward, done, _, _ = env.step(action.item())
+        next_state, reward, done, _, _ = env.step(action.squeeze().item())
         agent.store({'log_prob': log_prob, 'reward': reward})
         state = next_state
 
