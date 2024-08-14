@@ -11,7 +11,7 @@ import numpy as np
 """
 Vanilla Policy Gradient (PG) implementation using PyTorch Lightning
 """
-class VanillaPG(pl.LightningModule):
+class VanillaPG(nn.Module):
     def __init__(self, env: gym.Env, gamma: float = 0.99) -> None:
         super().__init__()
         self.actor = nn.Sequential(
@@ -29,37 +29,33 @@ class VanillaPG(pl.LightningModule):
     """
     Get the action and the log probability of the action
     """
-    def get_action(self, obs: np.ndarray) -> Tuple[Any, Tensor]:
+    def get_action(self, obs) -> Tuple[Any, Tensor]:
         state = torch.from_numpy(obs).float().unsqueeze(0)
         logits = self.actor(state)
         dist = torch.distributions.Categorical(logits=logits)
         action = dist.sample()
-        return action.item(), dist.log_prob(action)
+        return action, dist.log_prob(action)
 
     def forward(self, x: np.ndarray):
         self.get_action(x)
 
-    def loss(self, log_prob: Tensor, reward: Tensor) -> Tensor:
-        return -(log_prob * reward).mean()
-
-    def training_step(self, batch: Dict[str, list[np.ndarray]]) -> Dict[str, Tensor]:
-        lp = batch['log_probs']
+    def update(self, batch: Dict[str, list[np.ndarray]]) -> Dict[str, Any]:
         rewards = batch['rewards']
-        returns = []
-        # calculate rewards-to-goj
+        gs = []
+        # calculate rewards-to-go
         R = 0
-        for i in reversed(range(len(rewards))):
-            R = rewards[i] + self.gamma * R
-            returns.insert(0, R)
-        returns = torch.tensor(returns, requires_grad=True)
-        log_probs = torch.tensor(lp, requires_grad=True)
+        for r in rewards[::-1]:
+            R = r + self.gamma * R
+            gs.insert(0, R)
+        returns = torch.tensor(gs)
+        loss = 0
+        for log_prob, R in zip(batch['log_probs'], returns):
+            loss += log_prob.mean() * R * -1
 
-        return {"loss" : self.loss(log_probs, returns), "returns": returns.mean()}
-
-    def backward(self, loss: Dict[str, Tensor]):
         self.optimizer.zero_grad()
-        loss['loss'].backward()
+        loss.backward()
         self.optimizer.step()
+        return {"loss": loss, "returns": returns}
 
     def get_optimizer(self): 
         return self.optimizer

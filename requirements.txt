@@ -3,3 +3,7 @@ gymnasium
 numpy
 torchmetrics
 pytorch-lightning
+lightning
+seaborn
+mujoco
+imageio

@@ -1,44 +1,3 @@
-# fmt: off
-"""
-Training using REINFORCE for Mujoco
-===================================
-
-.. image:: /_static/img/tutorials/reinforce_invpend_gym_v26_fig1.gif
-  :width: 400
-  :alt: agent-environment-diagram
-
-This tutorial serves 2 purposes:
- 1. To understand how to implement REINFORCE [1] from scratch to solve Mujoco's InvertedPendulum-v4
- 2. Implementation a deep reinforcement learning algorithm with Gymnasium's v0.26+ `step()` function
-
-We will be using **REINFORCE**, one of the earliest policy gradient methods. Unlike going under the burden of learning a value function first and then deriving a policy out of it,
-REINFORCE optimizes the policy directly. In other words, it is trained to maximize the probability of Monte-Carlo returns. More on that later.
-
-**Inverted Pendulum** is Mujoco's cartpole but now powered by the Mujoco physics simulator -
-which allows more complex experiments (such as varying the effects of gravity).
-This environment involves a cart that can moved linearly, with a pole fixed on it at one end and having another end free.
-The cart can be pushed left or right, and the goal is to balance the pole on the top of the cart by applying forces on the cart.
-More information on the environment could be found at https://gymnasium.farama.org/environments/mujoco/inverted_pendulum/
-
-**Training Objectives**: To balance the pole (inverted pendulum) on top of the cart
-
-**Actions**: The agent takes a 1D vector for actions. The action space is a continuous ``(action)`` in ``[-3, 3]``,
-where action represents the numerical force applied to the cart
-(with magnitude representing the amount of force and sign representing the direction)
-
-**Approach**: We use PyTorch to code REINFORCE from scratch to train a Neural Network policy to master Inverted Pendulum.
-
-An explanation of the Gymnasium v0.26+ `Env.step()` function
-
-``env.step(A)`` allows us to take an action 'A' in the current environment 'env'. The environment then executes the action
-and returns five variables:
-
--  ``next_obs``: This is the observation that the agent will receive after taking the action.
--  ``reward``: This is the reward that the agent will receive after taking the action.
--  ``terminated``: This is a boolean variable that indicates whether or not the environment has terminated.
--  ``truncated``: This is a boolean variable that also indicates whether the episode ended by early truncation, i.e., a time limit is reached.
--  ``info``: This is a dictionary that might contain additional information about the environment.
-"""
 from __future__ import annotations
 
 import random
@@ -55,20 +14,6 @@ import gymnasium as gym
 
 
 plt.rcParams["figure.figsize"] = (10, 5)
-
-
-# %%
-# Policy Network
-# ~~~~~~~~~~~~~~
-#
-# .. image:: /_static/img/tutorials/reinforce_invpend_gym_v26_fig2.png
-#
-# We start by building a policy that the agent will learn using REINFORCE.
-# A policy is a mapping from the current environment observation to a probability distribution of the actions to be taken.
-# The policy used in the tutorial is parameterized by a neural network. It consists of 2 linear layers that are shared between both the predicted mean and standard deviation.
-# Further, the single individual linear layers are used to estimate the mean and the standard deviation. ``nn.Tanh`` is used as a non-linearity between the hidden layers.
-# The following function estimates a mean and standard deviation of a normal distribution from which an action is sampled. Hence it is expected for the policy to learn
-# appropriate weights to output means and standard deviation based on the current observation.
 
 
 class Policy_Network(nn.Module):
@@ -124,23 +69,6 @@ class Policy_Network(nn.Module):
         )
 
         return action_means, action_stddevs
-
-
-# %%
-# Building an agent
-# ~~~~~~~~~~~~~~~~~
-#
-# .. image:: /_static/img/tutorials/reinforce_invpend_gym_v26_fig3.jpeg
-#
-# Now that we are done building the policy, let us develop **REINFORCE** which gives life to the policy network.
-# The algorithm of REINFORCE could be found above. As mentioned before, REINFORCE aims to maximize the Monte-Carlo returns.
-#
-# Fun Fact: REINFROCE is an acronym for " 'RE'ward 'I'ncrement 'N'on-negative 'F'actor times 'O'ffset 'R'einforcement times 'C'haracteristic 'E'ligibility
-#
-# Note: The choice of hyperparameters is to train a decently performing agent. No extensive hyperparameter
-# tuning was done.
-#
-
 
 class REINFORCE:
     """REINFORCE algorithm."""
