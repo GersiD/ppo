@@ -65,5 +65,5 @@ class VanillaPG(pl.LightningModule):
         return self.optimizer
 
     def configure_optimizers(self):
-        self.optimizer = torch.optim.Adam(self.actor.parameters(), lr=1e-3)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return self.optimizer

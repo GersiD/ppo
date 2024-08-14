@@ -287,12 +287,7 @@ for seed in [1, 2, 3, 5, 8]:  # Fibonacci seeds
 
     rewards_over_seeds.append(reward_over_episodes)
 
-
-# %%
 # Plot learning curve
-# ~~~~~~~~~~~~~~~~~~~
-#
-
 rewards_to_plot = [[reward[0] for reward in rewards] for rewards in rewards_over_seeds]
 df1 = pd.DataFrame(rewards_to_plot).melt()
 df1.rename(columns={"variable": "episodes", "value": "reward"}, inplace=True)
@@ -301,18 +296,3 @@ sns.lineplot(x="episodes", y="reward", data=df1).set(
     title="REINFORCE for InvertedPendulum-v4"
 )
 plt.show()
-
-# %%
-# .. image:: /_static/img/tutorials/reinforce_invpend_gym_v26_fig4.png
-#
-# Author: Siddarth Chandrasekar
-#
-# License: MIT License
-#
-# References
-# ~~~~~~~~~~
-#
-# [1] Williams, Ronald J.. “Simple statistical gradient-following
-# algorithms for connectionist reinforcement learning.” Machine Learning 8
-# (2004): 229-256.
-#

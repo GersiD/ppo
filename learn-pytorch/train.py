@@ -29,9 +29,13 @@ def train_one_epoch(env, agent):
 env = gym.make('CartPole-v1')
 agent = agent.VanillaPG(env)
 returns = []
-for i in range(100):
+Epoch_rets = []
+for i in range(10000):
     returns.append(train_one_epoch(env, agent))
-    print(f'Epoch {i}: {returns[-1]}')
+    Epoch_rets.append(returns[-1])
+    if i % 1000 == 0:
+        print(f'Epoch {i}: {np.mean(returns)}')
+        Epoch_rets = []
 
 plt.plot(returns)
 plt.xlabel('Epochs')
