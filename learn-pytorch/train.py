@@ -1,30 +1,33 @@
 import gym
-import lightning as L
 import agent
-import pytorch_lightning as pl
 import torch
-from torch import Tensor
-from typing import Dict
+import tensordict
 import numpy as np
 
-
-env = gym.make('CartPole-v1')
-agent = agent.VanillaPG(env)
-
-fabric = L.Fabric()
-fabric.launch()
-
-optimizer = agent.configure_optimizers()
-agent, optimizer = fabric.setup(agent, optimizer)
-
-num_epochs = 10
-for epoch in range(num_epochs):
-    print(f"Epoch {epoch}")
-    state = env.reset()
+def train_one_epoch(env, agent, optim):
     done = False
+    obs = env.reset()
+    obs = obs[0]
+    log_probs = []
+    rewards = []
+    ts = 0
     while not done:
-        action, log_prob = agent.get_action(Tensor(state[0]))
-        next_state, reward, done, _, _ = env.step(action.squeeze().item())
-        agent.store({'log_prob': log_prob, 'reward': reward})
-        state = next_state
+        ts += 1
+        action, log_prob = agent.get_action(torch.tensor(obs))
+        obs, reward, done, _, _ = env.step(action.item())
+        log_probs.append(log_prob)
+        rewards.append(reward)
+        print(reward)
+        if done or ts >= 1000:
+            break
+    R = torch.tensor([np.sum(rewards[i:]) * 0.99 ** i for i in range(len(rewards))])
+    L = torch.tensor(log_probs)
+    optim.zero_grad()
+    agent.training_step(L, R)
+    optim.step()
 
+env = gym.make('MountainCar-v0')
+agent = agent.VanillaPG(env)
+optimizer = agent.configure_optimizers()
+for i in range(100):
+    train_one_epoch(env, agent, optimizer)
