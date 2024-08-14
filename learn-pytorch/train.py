@@ -1,33 +1,40 @@
-import gym
+import gymnasium as gym
 import agent
 import torch
-import tensordict
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
-def train_one_epoch(env, agent, optim):
+def train_one_epoch(env, agent):
     done = False
     obs = env.reset()
     obs = obs[0]
-    log_probs = []
-    rewards = []
+    batch = {
+        'log_probs': [],
+        'rewards': []
+    }
     ts = 0
     while not done:
         ts += 1
-        action, log_prob = agent.get_action(torch.tensor(obs))
-        obs, reward, done, _, _ = env.step(action.item())
-        log_probs.append(log_prob)
-        rewards.append(reward)
-        print(reward)
+        action, log_prob = agent.get_action(obs)
+        obs, reward, done, _, _ = env.step(action)
+        batch['log_probs'].append(log_prob)
+        batch['rewards'].append(reward)
         if done or ts >= 1000:
             break
-    R = torch.tensor([np.sum(rewards[i:]) * 0.99 ** i for i in range(len(rewards))])
-    L = torch.tensor(log_probs)
-    optim.zero_grad()
-    agent.training_step(L, R)
-    optim.step()
+    l = agent.training_step(batch)
+    agent.backward(l)
+    return l['returns'].item()
 
-env = gym.make('MountainCar-v0')
+env = gym.make('CartPole-v1')
 agent = agent.VanillaPG(env)
-optimizer = agent.configure_optimizers()
+returns = []
 for i in range(100):
-    train_one_epoch(env, agent, optimizer)
+    returns.append(train_one_epoch(env, agent))
+    print(f'Epoch {i}: {returns[-1]}')
+
+plt.plot(returns)
+plt.xlabel('Epochs')
+plt.ylabel('Returns')
+plt.show()
+plt.savefig('returns.png')
