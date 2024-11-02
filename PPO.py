@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 import gymnasium as gym
-from lightning.pytorch import LightningModule
+from pytorch_lightning import LightningModule
 from torchmetrics import MeanMetric
 from torch.nn import Module
 from torch import Tensor
