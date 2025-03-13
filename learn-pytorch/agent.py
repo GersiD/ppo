@@ -14,12 +14,13 @@ Vanilla Policy Gradient (PG) implementation using PyTorch Lightning
 class VanillaPG(nn.Module):
     def __init__(self, env: gym.Env, gamma: float = 0.99) -> None:
         super().__init__()
+        self.hidden_size = 64
         self.actor = nn.Sequential(
-            nn.Linear(env.observation_space.shape[0], 128),
+            nn.Linear(env.observation_space.shape[0], self.hidden_size),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(self.hidden_size, self.hidden_size),
             nn.ReLU(),
-            nn.Linear(128, env.action_space.n))
+            nn.Linear(self.hidden_size, env.action_space.n))
         self.gamma = gamma
         self.configure_optimizers()
 
@@ -40,11 +41,10 @@ class VanillaPG(nn.Module):
         self.get_action(x)
 
     def update(self, batch: Dict[str, list[np.ndarray]]) -> Dict[str, Any]:
-        rewards = batch['rewards']
         gs = []
         # calculate rewards-to-go
         R = 0
-        for r in rewards[::-1]:
+        for r in batch['rewards'][::-1]:
             R = r + self.gamma * R
             gs.insert(0, R)
         returns = torch.tensor(gs)
